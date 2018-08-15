@@ -23,7 +23,9 @@ logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
 db.create_engine('web_user', 'web_pwd', 'web_db')
 Model.create_all()
 u = User(name='Test', email='test@example.com', password='1234567890', image='about:blank')
+u1 = User(name='jsong', email='json@example.com', password='1234567890', image='about:blank')
 u.insert()
+u1.insert()
 print 'new user id:', u.id
 
 u1 = User.find_first('where email=?', 'test@example.com')

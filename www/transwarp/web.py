@@ -9,6 +9,8 @@ __author__ = 'copy from Michael Liao'
 
 import types, os, re, cgi, sys, time, datetime, functools, mimetypes, threading, logging, urllib, traceback
 
+logger = logging.getLogger(__name__)
+
 try:
     from cStringIO import StringIO
 except ImportError:
@@ -1187,12 +1189,12 @@ class Jinja2TemplateEngine(TemplateEngine):
 
 def _default_error_handler(e, start_response, is_debug):
     if isinstance(e, HttpError):
-        logging.info('HttpError: %s' % e.status)
+        logger.info('HttpError: %s' % e.status)
         headers = e.headers[:]
         headers.append(('Content-Type', 'text/html'))
         start_response(e.status, headers)
         return ('<html><body><h1>%s</h1></body></html>' % e.status)
-    logging.exception('Exception:')
+    logger.exception('Exception:')
     start_response('500 Internal Server Error', [('Content-Type', 'text/html'), _HEADER_X_POWERED_BY])
     if is_debug:
         return _debug()
@@ -1222,7 +1224,7 @@ def view(path):
         def _wrapper(*args, **kw):
             r = func(*args, **kw)
             if isinstance(r, dict):
-                logging.info('return Template')
+                logger.info('return Template')
                 return Template(path, **r)
             raise ValueError('Expect return a dict when using @view() decorator.')
         return _wrapper
@@ -1366,7 +1368,7 @@ class WSGIApplication(object):
     def add_module(self, mod):
         self._check_not_running()
         m = mod if type(mod)==types.ModuleType else _load_module(mod)
-        logging.info('Add module: %s' % m.__name__)
+        logger.info('Add module: %s' % m.__name__)
         for name in dir(m):
             fn = getattr(m, name)
             if callable(fn) and hasattr(fn, '__web_route__') and hasattr(fn, '__web_method__'):
@@ -1385,17 +1387,18 @@ class WSGIApplication(object):
                 self._get_dynamic.append(route)
             if route.method=='POST':
                 self._post_dynamic.append(route)
-        logging.info('Add route: %s' % str(route))
+        logger.info('Add route: %s' % str(route))
 
     def add_interceptor(self, func):
         self._check_not_running()
         self._interceptors.append(func)
-        logging.info('Add interceptor: %s' % str(func))
+        logger.info('Add interceptor: %s' % str(func))
 
     def run(self, port=9000, host='127.0.0.1'):
         from wsgiref.simple_server import make_server
-        logging.info('application (%s) will start at %s:%s...' % (self._document_root, host, port))
+        #logger.info('application (%s) will start at %s:%s...' % (self._document_root, host, port))
         server = make_server(host, port, self.get_wsgi_application(debug=True))
+        logger.info('application (%s) started at %s:%s...' % (self._document_root, host, port))
         server.serve_forever()
 
     def get_wsgi_application(self, debug=False):
@@ -1453,7 +1456,7 @@ class WSGIApplication(object):
                 start_response(e.status, response.headers)
                 return ['<html><body><h1>', e.status, '</h1></body></html>']
             except Exception, e:
-                logging.exception(e)
+                logger.exception(e)
                 if not debug:
                     start_response('500 Internal Server Error', [])
                     return ['<html><body><h1>500 Internal Server Error</h1></body></html>']
@@ -1475,6 +1478,8 @@ class WSGIApplication(object):
         return wsgi
 
 if __name__=='__main__':
+    LOG_FORMAT = ('%(levelname) -10s %(process)d %(asctime)s %(filename)-10s %(lineno) -5d: %(message)s') 
+    logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
     sys.path.append('.')
     import doctest
     doctest.testmod()

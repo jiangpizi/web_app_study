@@ -37,5 +37,5 @@ if __name__=='__main__':
     logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
     #print os.path.dirname(os.path.abspath(__file__))
     #print os.path.abspath(__file__)
-    wsgi.run(9000)
+    wsgi.run(port=9000,host='0.0.0.0')
 
