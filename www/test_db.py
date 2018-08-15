@@ -26,14 +26,9 @@ u = User(name='Test', email='test@example.com', password='1234567890', image='ab
 u1 = User(name='jsong', email='json@example.com', password='1234567890', image='about:blank')
 u.insert()
 u1.insert()
-print 'new user id:', u.id
 
-u1 = User.find_first('where email=?', 'test@example.com')
-print 'find user\'s name:', u1.name
+b = Blog(id=1,user_id='00153431774194282fc64ed618a485e83a2f227bce4da45000', user_name='jsong', name='test blog', summary='test blog:this is a blog about test',context="测试博客")
 
-u1.delete()
-
-u2 = User.find_first('where email=?', 'test@example.com')
-print 'find user:', u2
-
-
+b2 = Blog(id=2,user_id='00153431774194282fc64ed618a485e83a2f227bce4da45000', user_name='jsong', name='test blog2', summary='test blog:this is a blog about test',context="测试博客2")
+b.insert()
+b2.insert()
