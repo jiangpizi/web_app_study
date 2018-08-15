@@ -436,7 +436,7 @@ if __name__=='__main__':
     create_engine('web_user', 'web_pwd', 'web_db')
     update('drop table if exists user')
     update('create table user (id int primary key, name text, email text, passwd text, last_modified real)')
-    #u1 = dict(id=1000, name='Michael', email='michael@test.org', passwd='123456', last_modified=time.time())
-    #insert('user', **u1)
+    u1 = dict(id=1000, name='Michael', email='michael@test.org', passwd='123456', last_modified=time.time())
+    insert('user', **u1)
     #import doctest
     #doctest.testmod()
