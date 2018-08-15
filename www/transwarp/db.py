@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 #from __future__ import unicode_literals
-from __future__ import absolute_import
+#from __future__ import absolute_import
 
 """
 Database operation module
@@ -56,7 +56,7 @@ class Dict(dict):
 def next_id(t=None):
     if t is None:
         t = time.time()
-    return '%015d%s000' %(init(t * 1000),uuid.uuid4().hex)
+    return '%015d%s000' %(int(t * 1000),uuid.uuid4().hex)
 
 def _profiling(start, sql=''):
     t = time.time() - start

@@ -12,6 +12,10 @@ import logging
 import db
 
 logger = logging.getLogger(__name__)
+
+class TableModuleError(Exception):
+    pass
+
 class Field(object):
     _count = 0
 
@@ -92,9 +96,12 @@ class VersionField(Field):
         super(VersionField,self).__init__(name=name,default=0,ddl='bigint')
 _triggers = frozenset(['pre_insert','pre_update','pre_delete'])
 
-def _gen_sql(table_name, mappings):
+def _gen_sql(table_name, mappings,checkfirst=True):
     pk = None
-    sql=['-- generating SQL for %s:' % table_name, 'create table `%s` (' % table_name]
+    if checkfirst:
+        sql=['-- generating SQL for %s:' % table_name, 'create table if not exists `%s` (' % table_name]
+    else:
+        sql=['-- generating SQL for %s:' % table_name, 'create table `%s` (' % table_name]
     for f in sorted(mappings.values(),lambda x, y: cmp(x._order,y._order)):
         if not hasattr(f,'ddl'):
             raise StandardError('no ddl in field "%s".' %f)
@@ -118,8 +125,12 @@ class ModelMetaclass(type):
         # store all subclasses info
         if not hasattr(cls,'subclasses'):
             cls.subclasses = {}
+            cls.sqls = {}
+            cls.check_sqls = {}
         if not name in cls.subclasses:
             cls.subclasses[name] = name
+            cls.sqls[name] = None
+            cls.check_sqls[name] = None
         else:
             logger.waring('Redefine class: %s ' % name)
 
@@ -153,6 +164,8 @@ class ModelMetaclass(type):
         attrs['__mappings__'] = mappings
         attrs['__primary_key__'] = primary_key
         attrs['__sql__'] = lambda self: _gen_sql(attrs['__table__'],mappings) #FIXME
+        cls.sqls[name] = _gen_sql(attrs['__table__'],mappings,checkfirst=False)
+        cls.check_sqls[name] = _gen_sql(attrs['__table__'],mappings)
         for trigger in _triggers:
             if not trigger in attrs:
                 attrs[trigger] = None
@@ -219,6 +232,28 @@ class Model(dict):
         self[key] = value
 
     @classmethod
+    def create_all(cls,bind=None, tables=None, checkfirst=True):
+        sqls = cls.sqls
+        check_sqls = cls.check_sqls
+        if checkfirst:
+            sqls = check_sqls
+        if tables is not None:
+            for table in tables:
+                try:
+                    sql = sqls[table]
+                except KeyError:
+                    raise TableModuleError("'table module not built' table:'%s' " %table)
+                db.update(sqls[table])
+        else:
+            for k,sql in sqls.iteritems():
+                    db.update(sql)
+
+    def create(self):
+        sql = self.__sql__()
+        #print sql
+        db.update(sql)
+
+    @classmethod
     def get(cls, pk):
         '''
         Get by primary key.
@@ -252,6 +287,7 @@ class Model(dict):
         Find by 'select count(pk) from table where ... ' and return int.
         '''
         return db.select_int('select count(`%s`) from `%s` %s' %(cls.__primary_key__.name,cls.__table__,where),*args)
+    
 
     def update(self):
         self.pre_update and self.pre_update()
@@ -288,6 +324,7 @@ class Model(dict):
                 params[v.name] = getattr(self,k)
         db.insert('%s' %self.__table__,**params)
         return self
+
 
 if __name__=='__main__':
     import sys
