@@ -7,6 +7,7 @@
 __author__= '601996910@qq.com'
 
 import sys
+import hashlib
 
 from models import User,Blog,Comment
 
@@ -22,8 +23,8 @@ logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
 
 db.create_engine('web_user', 'web_pwd', 'web_db')
 Model.create_all()
-u = User(name='Test', email='test@example.com', password='1234567890', image='about:blank')
-u1 = User(name='jsong', email='json@example.com', password='1234567890', image='about:blank')
+u = User(name='admin',admin=1, email='admin123@qq.com', image='about:blank')
+u1 = User(name='jsong', email='json@example.com', image='about:blank')
 u.insert()
 u1.insert()
 
